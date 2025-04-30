@@ -111,32 +111,55 @@
     const soundCloudIframe = document.getElementById('soundcloud-player');
 
     const widget = SC.Widget(soundCloudIframe);
+
+    let isWidgetReady = false;
     let isPlaying = false;
+    let queuedPlay = false;
+
+    widget.bind(SC.Widget.Events.READY, () => {
+      isWidgetReady = true;
+      if (queuedPlay) {
+        widget.play();
+        isPlaying = true;
+        playPauseIcon.classList.replace('fa-play', 'fa-pause');
+        queuedPlay = false;
+      }
+    });
 
     function startMusicAndEnter() {
-      widget.play();
-      isPlaying = true;
-      playPauseIcon.classList.remove('fa-play');
-      playPauseIcon.classList.add('fa-pause');
-
+      if (isWidgetReady) {
+        widget.play();
+        isPlaying = true;
+        playPauseIcon.classList.replace('fa-play', 'fa-pause');
+      } else {
+        queuedPlay = true;
+      }
       enterScreen.style.opacity = '0';
       setTimeout(() => {
         enterScreen.style.display = 'none';
-      }, 500); 
+      }, 500);
     }
 
     function togglePlayPause() {
+      if (!isWidgetReady) return;
       if (isPlaying) {
         widget.pause();
-        playPauseIcon.classList.remove('fa-pause');
-        playPauseIcon.classList.add('fa-play');
+        playPauseIcon.classList.replace('fa-pause', 'fa-play');
       } else {
         widget.play();
-        playPauseIcon.classList.remove('fa-play');
-        playPauseIcon.classList.add('fa-pause');
+        playPauseIcon.classList.replace('fa-play', 'fa-pause');
       }
       isPlaying = !isPlaying;
     }
+
+    widget.bind(SC.Widget.Events.PLAY, () => {
+      isPlaying = true;
+      playPauseIcon.classList.replace('fa-play', 'fa-pause');
+    });
+    widget.bind(SC.Widget.Events.PAUSE, () => {
+      isPlaying = false;
+      playPauseIcon.classList.replace('fa-pause', 'fa-play');
+    });
 
     enterScreen.addEventListener('click', startMusicAndEnter);
     playPauseBtn.addEventListener('click', togglePlayPause);
